@@ -29,7 +29,7 @@ namespace HEInventions.Logging
         /// <summary>
         /// Raven client for Sentry logging.
         /// </summary>
-        private RavenClient ravenClient;
+        private RavenClient _RavenClient;
 
         /// <summary>
         /// Store the host ID from the data in the settings file.
@@ -86,10 +86,9 @@ namespace HEInventions.Logging
 
             Instance = new RavenLog()
             {
-                ravenClient = new RavenClient(sentryDSN),
+                _RavenClient = new RavenClient(sentryDSN),
                 ErrorThreshold = errorThreshold,
-                InstallationHostID = (settingsPath != "" && configKeys != null) ? 
-                    GetHostnameFromSettingsFile(settingsPath, configKeys) : UndefinedSetting
+                InstallationHostID = GetHostnameFromSettingsFile(settingsPath, configKeys)
             };
         }
         #endregion
@@ -156,7 +155,7 @@ namespace HEInventions.Logging
         /// <param name="ex">The (optional) Exception object which is added to the Sentry event.</param>
         private void NewSentryEvent(String msg, ErrorLevel level, Exception ex)
         {
-            if (ravenClient == null)
+            if (_RavenClient == null)
                 return;
             try
             {
@@ -179,7 +178,7 @@ namespace HEInventions.Logging
             sentryEvent.Tags = new Dictionary<string, string> { { "host_id", InstallationHostID } };
             sentryEvent.Message = msg;
             sentryEvent.Level = level;
-            ravenClient.Capture(sentryEvent);
+            _RavenClient.Capture(sentryEvent);
 
             OnMessage?.Invoke(sentryEvent);
         }
@@ -189,7 +188,7 @@ namespace HEInventions.Logging
         /// <summary>
         /// Forms a hostname from the machine settings file (in JSON format) data.
         /// </summary>
-        /// <param name="settingsFile">The machine settings JSON file.</param>
+        /// <param name="settingsFile">The path to the machine settings JSON file.</param>
         /// <param name="configKeys">The keys to use to extract data from the file and 
         /// form the hostname string.</param>
         /// <returns></returns>
