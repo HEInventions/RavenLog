@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>
+        <id>HEInventions.Logging</id>
+        <version>1.0.0</version>
+        <title>HEInventions.Logging</title>
+        <authors>HEInventions</authors>
+        <owners>HEInventions</owners>
+        <licenseUrl>https://github.com/HEInventions/RavenLog/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/HEInventions/RavenLog</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Wrapper for SharpRaven that simplies configuration and sentry events.</description>
+        <tags>Sentry,SharpRaven</tags>
+        <dependencies>
+            <group targetFramework=".NETFramework4.0">
+                <dependency id="Newtonsoft.Json" version="10.0.3" />
+            </group>
+            <group targetFramework=".NETFramework4.0">
+                <dependency id="SharpRaven" version="2.2.0" />
+            </group>
+        </dependencies>
+        <frameworkAssemblies>
+            <frameworkAssembly assemblyName="SharpRaven" targetFramework="" />
+        </frameworkAssemblies>
+    </metadata>
+        <files>
+        <file src="HEInventions.Logging.dll" target="lib\net40"/>
+    </files>
+</package>
