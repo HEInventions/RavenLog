@@ -18,13 +18,6 @@ namespace HEInventions.Logging
     /// </summary>
     public sealed class RavenLog
     {
-        #region Constants
-        /// <summary>
-        /// If we cannot retrieve the machine settings, set a default value.
-        /// </summary>
-        public const string UndefinedSetting = "UNDEFINED";
-        #endregion
-
         #region Properties and Fields
         /// <summary>
         /// Raven client for Sentry logging.
@@ -32,14 +25,14 @@ namespace HEInventions.Logging
         private RavenClient _RavenClient;
 
         /// <summary>
-        /// Store the host ID from the data in the settings file.
-        /// </summary>
-        public string InstallationHostID = "";
-
-        /// <summary>
         /// Only send sentry events that equal to, or are above, the defined threshold.
         /// </summary>
-        public string ErrorThreshold = "";
+        private string _ErrorThreshold = "";
+
+        /// <summary>
+        /// Contains additional tags to send up with a Sentry event (e.g. the host_id of a machine).
+        /// </summary>
+        private Dictionary<string, string> _ExtraTags { get; set; }
 
         /// <summary>
         /// Triggered when a Sentry event is sent to the server.
@@ -71,15 +64,13 @@ namespace HEInventions.Logging
 
         #region RavenLog Configuration.
         /// <summary>
-        /// Configures RavenLog and creates a new instance by setting the Sentry DSN, a severity threshold, 
-        /// specifying a settings file e.g. to configure the hostID, and which keys to look for in the settings file.
+        /// Configures RavenLog and creates a new instance by setting the Sentry DSN, a severity threshold, and optional
+        /// additional tags.
         /// </summary>
         /// <param name="sentryDSN">The Sentry server to post events to.</param>
         /// <param name="errorThreshold">The severity threshold - all errors equal to or above this will be logged.</param>
-        /// <param name="settingsPath">Location of a settings file (typically JSON) which allows a hostID to be sent with 
-        /// Sentry events.</param>
-        /// <param name="configKeys">The keys to extract values from in the settings file.</param>
-        public static void Configure(string sentryDSN, string errorThreshold, string settingsPath = "", StringCollection configKeys = null)
+        /// <param name="extraTags">Additional tags that are useful to send up with a Sentry event.</param>
+        public static void Configure(string sentryDSN, string errorThreshold, Dictionary<string, string> extraTags = null)
         {
             if (_Instance != null)
                 throw new InvalidOperationException("RavenLog is already configured.");
@@ -87,8 +78,8 @@ namespace HEInventions.Logging
             Instance = new RavenLog()
             {
                 _RavenClient = new RavenClient(sentryDSN),
-                ErrorThreshold = errorThreshold,
-                InstallationHostID = GetHostnameFromSettingsFile(settingsPath, configKeys)
+                _ErrorThreshold = errorThreshold,
+                _ExtraTags = extraTags
             };
         }
         #endregion
@@ -159,7 +150,7 @@ namespace HEInventions.Logging
                 return;
             try
             {
-                var threshold = Enum.Parse(typeof(ErrorLevel), ErrorThreshold);
+                var threshold = Enum.Parse(typeof(ErrorLevel), _ErrorThreshold);
                 if ((int)level > (int)threshold)
                     return;
             }
@@ -175,43 +166,12 @@ namespace HEInventions.Logging
             else
                 sentryEvent = new SentryEvent(msg);
 
-            sentryEvent.Tags = new Dictionary<string, string> { { "host_id", InstallationHostID } };
+            sentryEvent.Tags = _ExtraTags;
             sentryEvent.Message = msg;
             sentryEvent.Level = level;
             _RavenClient.Capture(sentryEvent);
 
             OnMessage?.Invoke(sentryEvent);
-        }
-        #endregion
-
-        #region Parsing and utility methods
-        /// <summary>
-        /// Forms a hostname from the machine settings file (in JSON format) data.
-        /// </summary>
-        /// <param name="settingsFile">The path to the machine settings JSON file.</param>
-        /// <param name="configKeys">The keys to use to extract data from the file and 
-        /// form the hostname string.</param>
-        /// <returns></returns>
-        private static string GetHostnameFromSettingsFile(String settingsFile, StringCollection configKeys)
-        {
-            try
-            {
-                string SettingsData, hostID = "";
-                using (StreamReader reader = new StreamReader(settingsFile))
-                {
-                    SettingsData = reader.ReadToEnd();
-                }
-                JObject jsonResponse = JObject.Parse(SettingsData);
-                foreach (var key in configKeys)
-                {
-                    hostID += $"{jsonResponse[key]}_";
-                }
-                return hostID.Remove(hostID.Length - 1);
-            }
-            catch (Exception ex)
-            {
-                return UndefinedSetting;
-            }
         }
         #endregion
     }
