@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SharpRaven;
 using SharpRaven.Data;
-using System.Collections.Specialized;
-using Newtonsoft.Json.Linq;
-using System.IO;
 
 namespace HEInventions.Logging
 {
@@ -65,15 +59,13 @@ namespace HEInventions.Logging
         #region RavenLog Configuration.
         /// <summary>
         /// Configures RavenLog and creates a new instance by setting the Sentry DSN, a severity threshold, and optional
-        /// additional tags.
+        /// additional tags. If an instance already exists, it will overwrite it
         /// </summary>
         /// <param name="sentryDSN">The Sentry server to post events to.</param>
         /// <param name="errorThreshold">The severity threshold - all errors equal to or above this will be logged.</param>
         /// <param name="extraTags">Additional tags that are useful to send up with a Sentry event.</param>
         public static void Configure(string sentryDSN, string errorThreshold, Dictionary<string, string> extraTags = null)
         {
-            if (_Instance != null)
-                throw new InvalidOperationException("RavenLog is already configured.");
 
             Instance = new RavenLog()
             {
